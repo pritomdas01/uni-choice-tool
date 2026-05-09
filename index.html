@@ -451,6 +451,11 @@ body.light .subj-name{color:#5b4de3!important}
   /* Layout: stack sidebar below main */
   #layout{grid-template-columns:1fr;padding:1rem .75rem;gap:1rem}
   #sidebar{position:static;top:auto}
+  /* Sidebar above footer: unwrap #main so footer becomes a direct
+     grid child, then use order to place sidebar before footer */
+  #main{display:contents}
+  #sidebar{order:98}
+  footer{order:99}
   .uni-pill-list{max-height:40vh}
 
   /* Header */
@@ -698,15 +703,6 @@ body.light .subj-name{color:#5b4de3!important}
     <button class="btn danger" onclick="clearAll()">✕ Clear all</button>
   </div>
 
-  <!-- SIDEBAR -->
-  <div id="sidebar">
-    <div class="sidebar-card">
-      <div class="sidebar-title"><span class="dot2"></span>University Wise View</div>
-      <p class="sidebar-hint">Click to expand · Click subject to jump</p>
-      <div class="uni-pill-list" id="uniPillList"><div style="color:var(--muted);font-size:.8rem;text-align:center;padding:.75rem 0">No choices yet</div></div>
-    </div>
-  </div>
-
   <footer>
     <div class="footer-inner">
       <div class="footer-logo">🎓 University Choice Portal</div>
@@ -719,6 +715,15 @@ body.light .subj-name{color:#5b4de3!important}
       <div class="footer-data-note">📦 সব data তোমার browser এ locally save হয়</div>
     </div>
   </footer>
+</div>
+
+<!-- SIDEBAR -->
+<div id="sidebar">
+  <div class="sidebar-card">
+    <div class="sidebar-title"><span class="dot2"></span>University Wise View</div>
+    <p class="sidebar-hint">Click to expand · Click subject to jump</p>
+    <div class="uni-pill-list" id="uniPillList"><div style="color:var(--muted);font-size:.8rem;text-align:center;padding:.75rem 0">No choices yet</div></div>
+  </div>
 </div>
 </div>
 
