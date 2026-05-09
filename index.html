@@ -449,8 +449,8 @@ body.light .subj-name{color:#5b4de3!important}
 /* MOBILE RESPONSIVE */
 @media(max-width:700px){
   /* Layout: stack sidebar below main */
-  #layout{grid-template-columns:1fr;padding:1rem .75rem;gap:1rem}
-  #sidebar{position:static;top:auto}
+  #layout{grid-template-columns:1fr;padding:1rem .75rem;gap:1rem;display:flex;flex-direction:column}
+  #sidebar{position:static;top:auto;order:-1}
   .uni-pill-list{max-height:40vh}
 
   /* Header */
