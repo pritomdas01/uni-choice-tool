@@ -423,14 +423,6 @@ body.light .subj-name{color:#5b4de3!important}
 .best-bet-text{font-size:.8rem;color:#86efac;flex:1;line-height:1.4}
 .best-bet-name{font-weight:700;color:#22c55e}
 
-/* ANALYTICS PANEL */
-.analytics-btn{background:none;border:1px solid #7c6fff44;border-radius:9px;padding:.32rem .7rem;color:var(--accent2);font-size:.73rem;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:5px}
-.analytics-btn:hover{background:#7c6fff15;border-color:var(--accent)}
-.analytics-panel{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.1rem 1.2rem;margin-bottom:1rem;animation:slideIn .3s ease}
-.analytics-panel h3{font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.9rem;display:flex;align-items:center;gap:6px}
-.charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:.9rem}
-.chart-box{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:.85rem}
-.chart-title{font-size:.68rem;color:var(--muted);margin-bottom:.5rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase}
 
 /* LIMIT WARNING */
 .limit-warn{background:#ef444412;border:1px solid #ef444430;border-radius:8px;padding:.45rem .85rem;font-size:.77rem;color:#ef4444;margin-bottom:.6rem;display:flex;align-items:center;gap:6px}
@@ -670,21 +662,7 @@ body.light .subj-name{color:#5b4de3!important}
   <div class="list-header">
     <span class="list-title">Your choices</span>
     <div style="display:flex;align-items:center;gap:.5rem">
-      <button class="analytics-btn" onclick="toggleAnalytics()" id="analyticsBtn">📊 Analytics</button>
       <span class="count-badge" id="countBadge">0 choices</span>
-    </div>
-  </div>
-  <div class="analytics-panel" id="analyticsPanel" style="display:none">
-    <h3>📊 Analytics</h3>
-    <div class="charts-grid">
-      <div class="chart-box">
-        <div class="chart-title">Chance Overview</div>
-        <canvas id="chanceChart" height="180"></canvas>
-      </div>
-      <div class="chart-box">
-        <div class="chart-title">University Distribution</div>
-        <canvas id="distChart" height="180"></canvas>
-      </div>
     </div>
   </div>
 
@@ -728,7 +706,7 @@ body.light .subj-name{color:#5b4de3!important}
 </div>
 
 <script>
-let choices=[], saveTimer, dragSrcIdx=null, addFav=false, favHighlight=false, lastDeleted=null, showAnalyticsPanel=false;
+let choices=[], saveTimer, dragSrcIdx=null, addFav=false, favHighlight=false, lastDeleted=null;
 const STORAGE_KEY='uni_choices_v3';
 
 window.addEventListener('scroll',()=>{
@@ -953,14 +931,14 @@ function render(animIdx){
 
   if(!choices.length){
     list.innerHTML='<div class="empty-state"><span class="big">🎓</span>No choices yet.<br>Add your first university above!</div>';
-    updateStats(dups,uniqueCount);updateSidebar(uniMap,dups);drawCharts(myPos,uniMap);return;
+    updateStats(dups,uniqueCount);updateSidebar(uniMap,dups);return;
   }
 
   const filtered=choices.map((c,i)=>({c,i})).filter(({c})=>!q||(c.uni+' '+c.subj).toLowerCase().includes(q));
 
   if(!filtered.length){
     list.innerHTML=`<div class="empty-state"><span class="big">🔍</span>No results for "<b>${esc(q)}</b>"</div>`;
-    updateStats(dups,uniqueCount);updateSidebar(uniMap,dups);drawCharts(myPos,uniMap);return;
+    updateStats(dups,uniqueCount);updateSidebar(uniMap,dups);return;
   }
 
   list.innerHTML=filtered.map(({c,i})=>{
@@ -1037,7 +1015,6 @@ function render(animIdx){
 
   updateStats(dups,uniqueCount);
   updateSidebar(uniMap,dups);
-  drawCharts(myPos,uniMap);
 }
 
 function updateMerit(i,val){
@@ -1151,76 +1128,6 @@ function setTag(i,tag){choices[i].tag=choices[i].tag===tag?null:tag;save();rende
 function setNote(i,val){choices[i].note=val.trim();save();}
 function undoDelete(){if(!lastDeleted)return;choices.splice(lastDeleted.index,0,lastDeleted.item);lastDeleted=null;save();render();const t=document.getElementById('_toast');if(t)t.remove();}
 function toggleTheme(){document.body.classList.toggle('light');const btn=document.getElementById('themeBtn');btn.textContent=document.body.classList.contains('light')?'🌙 Dark':'☀️ Light';}
-function toggleAnalytics(){
-  showAnalyticsPanel=!showAnalyticsPanel;
-  const p=document.getElementById('analyticsPanel');
-  p.style.display=showAnalyticsPanel?'block':'none';
-  document.getElementById('analyticsBtn').textContent=showAnalyticsPanel?'📊 Hide':'📊 Analytics';
-  if(showAnalyticsPanel){const myPos=parseInt(document.getElementById('myPosition').value)||null;const{uniMap}=getDupInfo();drawCharts(myPos,uniMap);}
-}
-function drawCharts(myPos,uniMap){
-  if(!showAnalyticsPanel)return;
-  // Chance bar chart
-  const cc=document.getElementById('chanceChart');
-  const dc=document.getElementById('distChart');
-  if(!cc||!dc)return;
-  const cctx=cc.getContext('2d');
-  const dctx=dc.getContext('2d');
-  const dpr=window.devicePixelRatio||1;
-  [cc,dc].forEach(c=>{c.width=c.offsetWidth*dpr;c.height=180*dpr;cctx.scale&&c===cc?cctx.scale(dpr,dpr):dctx.scale(dpr,dpr);});
-  cc.width=cc.offsetWidth*dpr;cc.height=180*dpr;cctx.scale(dpr,dpr);
-  dc.width=dc.offsetWidth*dpr;dc.height=180*dpr;dctx.scale(dpr,dpr);
-  const W2=cc.offsetWidth,H2=180;
-  const W3=dc.offsetWidth,H3=180;
-  // Dark/light detect
-  const isDark=!document.body.classList.contains('light');
-  const bg=isDark?'#22222f':'#f8f7ff';const fg=isDark?'#8b8aa8':'#6b7280';const gridC=isDark?'#2e2e4233':'#e0dcf8';
-  // Chance chart
-  cctx.clearRect(0,0,W2,H2);
-  const withMerit=choices.filter(c=>c.merit&&myPos);
-  if(!withMerit.length){cctx.fillStyle=fg;cctx.font='11px sans-serif';cctx.textAlign='center';cctx.fillText('Add position & merit to see chart',W2/2,H2/2);return;}
-  const top=withMerit.slice(0,8);
-  const bH=Math.floor((H2-30)/(top.length));
-  const maxW=W2-80;
-  top.forEach((c,i)=>{
-    const pct=calcChance(myPos,c.merit);
-    const st=chanceStyle(pct);
-    const y=15+i*bH;
-    cctx.fillStyle=gridC;cctx.fillRect(60,y,maxW,bH-4);
-    cctx.fillStyle=st?.color||'#7c6fff';cctx.fillRect(60,y,(pct/100)*maxW,bH-4);
-    cctx.fillStyle=fg;cctx.font=`10px sans-serif`;cctx.textAlign='right';
-    const label=c.uni.length>8?c.uni.slice(0,8)+'…':c.uni;
-    cctx.fillText(label,56,y+bH-7);
-    cctx.fillStyle=st?.color||'#7c6fff';cctx.textAlign='left';cctx.font='bold 9px sans-serif';
-    cctx.fillText(pct+'%',60+(pct/100)*maxW+3,y+bH-7);
-  });
-  // Donut chart
-  dctx.clearRect(0,0,W3,H3);
-  const entries=Object.entries(uniMap);
-  if(!entries.length){dctx.fillStyle=fg;dctx.font='11px sans-serif';dctx.textAlign='center';dctx.fillText('No choices yet',W3/2,H3/2);return;}
-  const colors=['#7c6fff','#22c55e','#f59e0b','#ef4444','#06b6d4','#a78bfa','#84cc16','#f97316'];
-  const cx=W3/2-20,cy=H3/2,r=Math.min(cx,cy)-10,r2=r*0.55;
-  let angle=-Math.PI/2;
-  const total=entries.reduce((s,[,v])=>s+v.length,0);
-  entries.forEach(([,v],i)=>{
-    const slice=(v.length/total)*Math.PI*2;
-    dctx.beginPath();dctx.moveTo(cx,cy);dctx.arc(cx,cy,r,angle,angle+slice);dctx.closePath();
-    dctx.fillStyle=colors[i%colors.length];dctx.fill();
-    dctx.strokeStyle=bg;dctx.lineWidth=2;dctx.stroke();
-    angle+=slice;
-  });
-  // Donut hole
-  dctx.beginPath();dctx.arc(cx,cy,r2,0,Math.PI*2);dctx.fillStyle=bg;dctx.fill();
-  dctx.fillStyle=fg;dctx.font='bold 11px sans-serif';dctx.textAlign='center';dctx.fillText(total,cx,cy+4);
-  // Legend
-  const legX=W3-65,legY=10;
-  entries.slice(0,6).forEach(([k,v],i)=>{
-    const name=choices.find(c=>c.uni.trim().toLowerCase()===k)?.uni||k;
-    const label=(name.length>8?name.slice(0,8)+'…':name);
-    dctx.fillStyle=colors[i%colors.length];dctx.fillRect(legX,legY+i*18,8,8);
-    dctx.fillStyle=fg;dctx.font='8px sans-serif';dctx.textAlign='left';dctx.fillText(label,legX+11,legY+i*18+7);
-  });
-}
 function exportExcel(){
   if(!choices.length){showToast('No choices to export','#ef4444');return;}
   const myPos=parseInt(document.getElementById('myPosition').value)||null;
